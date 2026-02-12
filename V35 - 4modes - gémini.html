@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Jeu de Couple – V24 Premium Edition</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        :root {
+            --bg-dark: #0f0c29;
+            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #ff4b81;
+            --accent-glow: rgba(255, 75, 129, 0.4);
+            --text: #ffffff;
+            --text-dim: #bbb;
+            --success: #27ae60;
+        }
+
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        body {
+            background: var(--bg-dark);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 20px; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        h1, h2, h3 { color: var(--accent); text-align: center; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px var(--accent-glow); }
+
+        .screen {
+            width: 100%; max-width: 800px; margin: 20px auto;
+            background: var(--glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 2rem; border-radius: 24px; border: 1px solid var(--glass-border);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        button {
+            background: var(--accent); border: none; border-radius: 50px;
+            padding: 12px 24px; color: #fff; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px var(--accent-glow); margin: 8px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); filter: brightness(1.1); }
+        button.secondary { background: transparent; border: 1px solid var(--glass-border); box-shadow: none; }
+        
+        .gage-card {
+            background: rgba(0,0,0,0.3); padding: 2rem; border-radius: 20px;
+            margin: 1.5rem 0; border-left: 5px solid var(--accent);
+            font-size: 1.3rem; text-align: center; line-height: 1.5;
+        }
+
+        input[type=text], input[type=number], select, textarea {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+            border-radius: 10px; padding: 12px; color: white; width: 100%; margin: 8px 0;
+        }
+
+        label { display: block; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 8px 0; cursor: pointer; }
+        label:hover { background: rgba(255,255,255,0.1); }
+        .pratique-desc { font-size: 0.85rem; color: var(--text-dim); display: block; margin-left: 25px; margin-top: 4px; }
+        .cat-title { color: var(--accent); margin-top: 15px; border-bottom: 1px solid rgba(255,75,129,0.3); padding-bottom: 5px; font-weight: bold; }
+
+        #progressContainer { background: rgba(255,255,255,0.1); border-radius: 50px; height: 10px; margin: 20px 0; overflow: hidden; }
+        #progressBar { background: var(--accent); height: 100%; width: 0%; box-shadow: 0 0 10px var(--accent); }
+
+        .error { color: #ff6b6b; text-align: center; margin: 10px 0; }
+        
+        /* Layout Grille pour Accessoires */
+        .acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    </style>
+</head>
+<body>
+
+<h1>Jeu de Couple – V24</h1>
+
+<div id="adminBtnDiv" class="screen">
+    <button onclick="showScreen('gameModeSelection')" style="width: 100%; font-size: 1.2rem;">🚀 Jouer</button>
+    <button onclick="openAdmin()" class="secondary" style="width: 100%;">⚙️ Administration</button>
+</div>
+
+<div id="gameModeSelection" class="screen hidden">
+    <h2>Mode de jeu</h2>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button onclick="setMode('classique')">Mode Classique</button>
+        <button onclick="setMode('pimente')">Mode Pimenté 🔥</button>
+        <button onclick="setMode('decouverte')">Mode Découverte 🧭</button>
+        <button onclick="setMode('competition')">Mode Compétition 🏆</button>
+    </div>
+    <button onclick="goBack()" class="secondary" style="margin-top:20px">Retour</button>
+</div>
+
+<div id="screen1" class="screen hidden">
+    <h2>Nombre de joueurs</h2>
+    <div style="display:flex; justify-content: space-around; margin: 20px 0;">
+        <label><input type="radio" name="nb" value="1"> 1</label>
+        <label><input type="radio" name="nb" value="2" checked> 2</label>
+        <label><input type="radio" name="nb" value="3"> 3</label>
+        <label><input type="radio" name="nb" value="4"> 4</label>
+    </div>
+    <button onclick="goPlayerForm()" style="width:100%">Suivant</button>
+    <div id="e1" class="error"></div>
+    <button onclick="goBack()" class="secondary">Retour</button>
+</div>
+
+<div id="screen2" class="screen hidden">
+    <div id="playerForm"></div>
+    <div id="e2" class="error"></div>
+    <button onclick="goBack()" class="secondary">Retour</button>
+</div>
+
+<div id="screen3" class="screen hidden">
+    <h2>Accessoires disponibles</h2>
+    <div id="acc"></div>
+    <button onclick="startGame()" style="width:100%; margin-top:20px; background: var(--success);">🔥 Commencer la partie</button>
+    <div id="e3" class="error"></div>
+    <button onclick="goBack()" class="secondary">Retour</button>
+</div>
+
+<div id="screen4" class="screen hidden">
+    <h2 id="levelTitle">Niveau 1</h2>
+    <div id="scoreBoard" style="text-align: center; margin-bottom: 10px; font-weight: bold; color: var(--accent);"></div>
+    <div id="gageArea"></div>
+    <div id="progressContainer"><div id="progressBar"></div></div>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+        <button onclick="nextGage()">Suivant ➔</button>
+        <button id="validateGageBtn" class="hidden" onclick="validateGage()" style="background: var(--success);">✅ Valider</button>
+        <button id="rerollGageBtn" class="secondary">🔄</button>
+    </div>
+    <button onclick="location.reload()" class="secondary" style="margin-top:20px">Accueil</button>
+</div>
+
+<div id="adminScreen" class="screen hidden">
+    <h2>Edition Admin</h2>
+    <button onclick="closeAdmin()">Retour</button>
+    <div class="admin-section">
+        <h3>Nouveau Gage</h3>
+        <select id="adminGageGenre"><option value="Homme">Homme</option><option value="Femme">Femme</option><option value="Mixte">Mixte</option></select>
+        <input type="number" id="adminGageLvl" placeholder="Niveau (1-5)" value="1">
+        <textarea id="adminGageText" placeholder="Texte du gage ({prenom} pour le joueur)"></textarea>
+        <button onclick="addGage()" style="width:100%">Ajouter le gage</button>
+    </div>
+    <div id="adminGageList" style="max-height: 300px; overflow-y: auto; margin-top: 10px;"></div>
+</div>
+
+<script>
+"use strict";
+
+const game = {players: [], acc: [], gages: [], level: 1, currentGageIndex: 0, currentPlayerIndex: 0, mode: ""};
+let totalPlayers = 0, currentPlayer = 1, screenHistory = [];
+let gagesList = JSON.parse(localStorage.getItem("gagesList")) || [];
+
+const pratiquesData = {
+    Homme: {
+        "Sexe oral": [
+            {id:"oral_actif", label:"Oral actif", desc:"Vous aimez lécher le sexe de votre partenaire."},
+            {id:"oral_passif", label:"Oral passif", desc:"Vous aimez que l'on vous lèche ou suce le sexe."},
+            {id:"oro_anal_actif_1", label:"Oro-anal actif Niveaux 1", desc:"Vous aimez embrasser les fesses de votre partenaire."},
+            {id:"oro_anal_passif", label:"Oro-anal passif", desc:"Vous aimez que l'on vous embrasse les fesses."}
+        ],
+        "Pénétration": [
+            {id:"penetration_h", label:"Pénétration", desc:"Vous aimez pénétrer le sexe d'une femme."}
+        ],
+        "Sexe anal": [
+            {id:"anal_actif_1", label:"Anal actif Niveau 1", desc:"Vous aimez caresser et doigter l'anus de votre partenaire."},
+            {id:"anal_actif_2", label:"Anal actif Niveau 2", desc:"Vous aimez sodomiser votre partenaire."},
+            {id:"anal_passif_1", label:"Anal passif Niveau 1", desc:"Vous aimez que l'on vous caresse et que l'on vous doigte l'anus."},
+            {id:"anal_passif_2", label:"Anal passif Niveau 2", desc:"Vous aimez que l'on vous sodomise avec un accessoire."}
+        ],
+        "Fun": [ {id:"fun", label:"Fun", desc:"Vous aimez les jeux de rôle, les défis..."} ],
+        "BDSM": [
+            {id:"soumission_1", label:"Soumission Niveau 1", desc:"Vous aimez les petits jeux de soumission."},
+            {id:"soumission_2", label:"Soumission Niveau 2", desc:"Vous aimez vous sentir dominé par votre partenaire même si cela comprend douleurs."},
+            {id:"domination_1", label:"Domination Niveau 1", desc:"Vous aimez les petits jeux de domination."},
+            {id:"domination_2", label:"Domination Niveau 2", desc:"Vous aimez dominer votre partenaire et vous savez punir sans blesser."}
+        ],
+        "Jeu solo": [ {id:"solo", label:"Jeu solo", desc:"Vous aimez prendre du plaisir seul"} ],
+        "Fetish": [
+            {id:"fetish_actif_1", label:"Actif niveau 1", desc:"Vous aimez caresser et masser les pieds de votre partenaire"},
+            {id:"fetish_actif_2", label:"Actif Niveau 2", desc:"Vous aimez embrasser les pieds de votre partenaire"},
+            {id:"fetish_passif_1", label:"Passif niveau 1", desc:"vous aimez vous faire caresser ou masser les pieds"},
+            {id:"fetish_passif_2", label:"Passif niveau 2", desc:"Vous aimez vous faire branler avec les pieds de votre partenaire"}
+        ]
+    },
+    Femme: {
+        "Sexe oral": [
+            {id:"oral_actif", label:"Oral actif", desc:"Vous aimez lécher et sucer le sexe de votre partenaire."},
+            {id:"oral_passif", label:"Oral passif", desc:"Vous aimez que l'on vous lèches le sexe."},
+            {id:"oro_anal_actif", label:"Oro-anal actif", desc:"Vous aimez embrasser les fesses de votre partenaire."},
+            {id:"oro_anal_passif", label:"Oro-anal passif", desc:"Vous aimez que l'on vous embrasse les fesses."}
+        ],
+        "Pénétration": [ {id:"penetration_f", label:"Pénétration", desc:"Vous aimez être pénétrée par un homme ou un accessoire."} ],
+        "Sexe anal": [
+            {id:"anal_actif_1", label:"Anal actif Niveau 1", desc:"Vous aimez caresser l'anus de votre partenaire."},
+            {id:"anal_actif_2", label:"Anal actif Niveau 2", desc:"Vous aimez sodomiser votre partenaire avec votre doigt ou un accessoire."},
+            {id:"anal_passif_1", label:"Anal passif Niveau 1", desc:"Vous aimez que l'on vous caresse et que l'on vous doigte l'anus."},
+            {id:"anal_passif_2", label:"Anal passif Niveau 2", desc:"Vous aimez que l'on vous caresse l'anus avec le sexe ou que l'on vous sodomise."}
+        ],
+        "Fun": [ {id:"fun", label:"Fun", desc:"Vous aimez les jeux de rôle, les défis..."} ],
+        "BDSM": [
+            {id:"soumission_1", label:"Soumission Niveau 1", desc:"Vous aimez les petits jeux de soumission."},
+            {id:"soumission_2", label:"Soumission Niveau 2", desc:"Vous aimez vous sentir dominé par votre partenaire même si cela comprend douleurs."},
+            {id:"domination_1", label:"Domination Niveau 1", desc:"Vous aimez les petits jeux de domination."},
+            {id:"domination_2", label:"Domination Niveau 2", desc:"Vous aimez dominer votre partenaire et vous savez punir sans blesser."}
+        ],
+        "Fetish": [
+            {id:"fetish_actif_1", label:"Actif niveau 1", desc:"Vous aimez caresser et masser les pieds de votre partenaire"},
+            {id:"fetish_actif_2", label:"Actif Niveau 2", desc:"Vous aimez caresser le sexe de votre partenaire avec vos pieds"},
+            {id:"fetish_passif_1", label:"Passif niveau 1", desc:"vous aimez vous faire caresser ou masser les pieds"},
+            {id:"fetish_passif_2", label:"Passif niveau 2", desc:"Vous aimez vous faire embrasser les pieds"}
+        ],
+        "Sperme": [
+            {id:"sperme_gout", label:"J'aime le sperme", desc:"Vous aimez y goûter mais pas l'avaler"},
+            {id:"finish_corps", label:"Finish corps", desc:"Vous aimez que l'on vous sperme sur le corps, seins, fesses, bas du ventre."}
+        ]
+    }
+};
+
+const accessoiresData = {
+    "Objet": ["Appareil photo", "Bougie", "Musique", "Plume", "Huile de massage", "Lubrifiant"],
+    "Boissons": ["Champagne", "Vin"],
+    "Aliments": ["Chantilly", "Fraises", "Glaçons", "Nutella"],
+    "Objets sexuels": ["Gode", "Gode anal", "Double gode", "Gode ceinture", "Anneau vibrant", "Vibromasseur", "Plug anal"],
+    "Objets BDSM": ["Cravache", "Fouet", "Menottes", "Masque ou Bandeau", "Pinces à seins"],
+    "Aucun accessoire": ["Aucun"]
+};
+
+function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    screenHistory.push(id);
+}
+
+function goBack(){
+    if(screenHistory.length <= 1) return location.reload();
+    screenHistory.pop();
+    const prev = screenHistory[screenHistory.length - 1];
+    document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+    document.getElementById(prev).classList.remove('hidden');
+}
+
+function setMode(m) { game.mode = m; showScreen('screen1'); }
+
+function goPlayerForm(){
+    const r = document.querySelector('input[name="nb"]:checked');
+    totalPlayers = parseInt(r.value);
+    currentPlayer = 1; game.players = [];
+    showScreen('screen2');
+    renderPlayerInput();
+}
+
+function renderPlayerInput(){
+    const div = document.getElementById("playerForm");
+    div.innerHTML = `<h3>Joueur ${currentPlayer}</h3>
+        <input id="prenom" placeholder="Prénom (ex: Alice)">
+        <p>Genre :</p>
+        <div style="display:flex; gap:10px;">
+            <label style="flex:1; text-align:center;"><input type="radio" name="genre" value="Homme" checked> Homme</label>
+            <label style="flex:1; text-align:center;"><input type="radio" name="genre" value="Femme"> Femme</label>
+        </div>
+        <div id="pratiquesArea"></div>
+        <button onclick="savePlayer()" style="width:100%; margin-top:15px;">Suivant</button>`;
+    
+    const updatePrats = () => {
+        const g = document.querySelector('input[name="genre"]:checked').value;
+        renderPratiques(g);
+    };
+    
+    updatePrats();
+    document.querySelectorAll('input[name="genre"]').forEach(el => el.onchange = updatePrats);
+}
+
+function renderPratiques(g){
+    const area = document.getElementById("pratiquesArea");
+    area.innerHTML = `<h4>Pratiques appréciées :</h4>`;
+    Object.entries(pratiquesData[g]).forEach(([cat, list]) => {
+        area.innerHTML += `<div class="cat-title">${cat}</div>`;
+        list.forEach(p => {
+            area.innerHTML += `<label><input type="checkbox" value="${p.id}"> ${p.label}<span class="pratique-desc">${p.desc}</span></label>`;
+        });
+    });
+}
+
+function savePlayer(){
+    const p = document.getElementById("prenom").value.trim() || `Joueur ${currentPlayer}`;
+    const g = document.querySelector('input[name="genre"]:checked').value;
+    const prs = [...document.querySelectorAll('#pratiquesArea input:checked')].map(i=>i.value);
+    game.players.push({prenom: p, genre: g, pratiques: prs});
+    if(currentPlayer < totalPlayers){ currentPlayer++; renderPlayerInput(); }
+    else { showScreen('screen3'); renderAcc(); }
+}
+
+function renderAcc(){
+    const div = document.getElementById("acc"); div.innerHTML = "";
+    Object.entries(accessoiresData).forEach(([cat, list]) => {
+        div.innerHTML += `<div class="cat-title">${cat}</div><div class="acc-grid">`;
+        list.forEach(a => {
+            div.innerHTML += `<label><input type="checkbox" name="acc_item" value="${a}" onchange="handleAccChange(this)"> ${a}</label>`;
+        });
+        div.innerHTML += `</div>`;
+    });
+}
+
+function handleAccChange(el) {
+    if(el.value === "Aucun" && el.checked) {
+        document.querySelectorAll('input[name="acc_item"]').forEach(i => { if(i.value !== "Aucun") i.checked = false; });
+    } else if (el.value !== "Aucun" && el.checked) {
+        const aucun = [...document.querySelectorAll('input[name="acc_item"]')].find(i => i.value === "Aucun");
+        if(aucun) aucun.checked = false;
+    }
+}
+
+function startGame(){
+    game.acc = [...document.querySelectorAll("input[name='acc_item']:checked")].map(i=>i.value);
+    if(game.acc.length === 0) { document.getElementById("e3").innerText = "Sélectionnez au moins une option (ou 'Aucun')"; return; }
+    game.level = 1; game.currentGageIndex = 0; game.currentPlayerIndex = 0;
+    if(game.mode === "competition"){
+        game.scores = {}; game.players.forEach(p => game.scores[p.prenom] = 0);
+        document.getElementById("validateGageBtn").classList.remove("hidden");
+    }
+    prepareGages();
+    showScreen('screen4');
+    displayGage();
+}
+
+function prepareGages(){
+    game.gagesByLevel = {1:[], 2:[], 3:[], 4:[], 5:[]};
+    for(let l=1; l<=5; l++){
+        let pool = gagesList.filter(g => g.niveau === l);
+        game.gagesByLevel[l] = pool.sort(() => Math.random() - 0.5).slice(0, 10);
+    }
+}
+
+function displayGage(){
+    const lvlPool = game.gagesByLevel[game.level];
+    if(!lvlPool || lvlPool.length === 0 || game.currentGageIndex >= lvlPool.length){
+        if(game.level < 5) { game.level++; game.currentGageIndex = 0; displayGage(); }
+        else document.getElementById("gageArea").innerHTML = "<h3>Partie terminée ! ❤️</h3>";
+        return;
+    }
+    const gage = lvlPool[game.currentGageIndex];
+    const player = game.players[game.currentPlayerIndex];
+    document.getElementById("levelTitle").innerText = `Niveau ${game.level}`;
+    document.getElementById("gageArea").innerHTML = `<div class="gage-card"><strong>${player.prenom}</strong>,<br>${gage.texte.replace(/{prenom}/g, player.prenom)}</div>`;
+    updateProgress();
+    if(game.mode === "competition") updateScores();
+}
+
+function nextGage(){
+    game.currentPlayerIndex++;
+    if(game.currentPlayerIndex >= game.players.length){
+        game.currentPlayerIndex = 0;
+        game.currentGageIndex++;
+    }
+    displayGage();
+}
+
+function validateGage(){
+    const player = game.players[game.currentPlayerIndex];
+    game.scores[player.prenom] += game.level;
+    if(game.scores[player.prenom] >= 45) alert("Victoire de " + player.prenom + " !");
+    nextGage();
+}
+
+function updateProgress(){
+    const percent = (game.currentGageIndex / 10) * 100;
+    document.getElementById("progressBar").style.width = percent + "%";
+}
+
+function updateScores(){
+    const sb = document.getElementById("scoreBoard");
+    sb.innerHTML = Object.entries(game.scores).map(([n,s]) => `${n}: ${s} pts`).join(" | ");
+}
+
+function openAdmin() { showScreen('adminScreen'); loadAdminList(); }
+function closeAdmin() { goBack(); }
+
+function addGage(){
+    const txt = document.getElementById("adminGageText").value;
+    const lvl = parseInt(document.getElementById("adminGageLvl").value);
+    if(!txt) return;
+    gagesList.push({texte: txt, niveau: lvl, genre: document.getElementById("adminGageGenre").value, accessoires: []});
+    localStorage.setItem("gagesList", JSON.stringify(gagesList));
+    document.getElementById("adminGageText").value = "";
+    loadAdminList();
+}
+
+function loadAdminList(){
+    const div = document.getElementById("adminGageList");
+    div.innerHTML = gagesList.map((g, i) => `
+        <div style="background:rgba(255,255,255,0.05); margin:5px 0; padding:10px; border-radius:10px; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;">
+            <span>Lvl ${g.niveau}: ${g.texte.substring(0,50)}...</span>
+            <button onclick="deleteGage(${i})" class="secondary" style="margin:0; padding:5px 10px;">❌</button>
+        </div>
+    `).join("");
+}
+
+function deleteGage(i){ if(confirm("Supprimer ?")) { gagesList.splice(i,1); localStorage.setItem("gagesList", JSON.stringify(gagesList)); loadAdminList(); } }
+</script>
+</body>
+</html>
